@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 
 const emit = defineEmits(['place-selected'])
 
@@ -7,6 +7,9 @@ const searchQuery = ref('')
 const searchResults = ref([])
 const isSearching = ref(false)
 const showResults = ref(false)
+const highlightedIndex = ref(-1)
+const inputRef = ref(null)
+const resultsRef = ref(null)
 let searchTimeout = null
 
 async function searchPlace(query) {
@@ -28,6 +31,7 @@ async function searchPlace(query) {
       const data = await response.json()
       searchResults.value = data
       showResults.value = data.length > 0
+      highlightedIndex.value = -1
     }
   } catch (error) {
     console.error('Search error:', error)
@@ -58,11 +62,17 @@ function selectPlace(place) {
   })
   searchQuery.value = place.display_name
   showResults.value = false
+  highlightedIndex.value = -1
+  // Blur the input after selection
+  if (inputRef.value) {
+    inputRef.value.blur()
+  }
 }
 
 function handleBlur() {
   setTimeout(() => {
     showResults.value = false
+    highlightedIndex.value = -1
   }, 200)
 }
 
@@ -71,28 +81,71 @@ function handleFocus() {
     showResults.value = true
   }
 }
+
+function scrollToHighlighted() {
+  nextTick(() => {
+    if (!resultsRef.value) return
+    const highlightedElement = resultsRef.value.querySelector('.search-result-item.highlighted')
+    if (highlightedElement) {
+      highlightedElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    }
+  })
+}
+
+function handleKeydown(event) {
+  if (!showResults.value || searchResults.value.length === 0) return
+
+  switch (event.key) {
+    case 'ArrowDown':
+      event.preventDefault()
+      highlightedIndex.value = (highlightedIndex.value + 1) % searchResults.value.length
+      scrollToHighlighted()
+      break
+    case 'ArrowUp':
+      event.preventDefault()
+      highlightedIndex.value = highlightedIndex.value <= 0
+        ? searchResults.value.length - 1
+        : highlightedIndex.value - 1
+      scrollToHighlighted()
+      break
+    case 'Enter':
+      event.preventDefault()
+      const indexToSelect = highlightedIndex.value >= 0 ? highlightedIndex.value : 0
+      if (searchResults.value[indexToSelect]) {
+        selectPlace(searchResults.value[indexToSelect])
+      }
+      break
+    case 'Escape':
+      showResults.value = false
+      highlightedIndex.value = -1
+      break
+  }
+}
 </script>
 
 <template>
   <div class="search-box">
     <div class="search-input-wrapper">
       <input
+        ref="inputRef"
         v-model="searchQuery"
         type="text"
         placeholder="Search for a place..."
         class="search-input"
         @focus="handleFocus"
         @blur="handleBlur"
+        @keydown="handleKeydown"
       />
       <span v-if="isSearching" class="search-spinner">🔍</span>
     </div>
 
-    <div v-if="showResults" class="search-results">
+    <div v-if="showResults" ref="resultsRef" class="search-results">
       <div
-        v-for="result in searchResults"
+        v-for="(result, index) in searchResults"
         :key="result.place_id"
-        class="search-result-item"
+        :class="['search-result-item', { highlighted: index === highlightedIndex }]"
         @click="selectPlace(result)"
+        @mouseenter="highlightedIndex = index"
       >
         <div class="result-name">{{ result.display_name }}</div>
         <div class="result-type">{{ result.type }}</div>
@@ -166,8 +219,14 @@ function handleFocus() {
   border-bottom: none;
 }
 
-.search-result-item:hover {
-  background-color: #f9fafb;
+.search-result-item:hover,
+.search-result-item.highlighted {
+  background-color: #f0f9ff;
+}
+
+.search-result-item.highlighted {
+  border-left: 3px solid #3b82f6;
+  padding-left: 9px;
 }
 
 .result-name {
