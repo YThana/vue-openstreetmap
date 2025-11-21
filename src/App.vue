@@ -3,6 +3,7 @@ import { ref, reactive, computed, watch } from 'vue'
 import MapView from './components/MapView.vue'
 import SourceSelector from './components/SourceSelector.vue'
 import Sidebar from './components/Sidebar.vue'
+import SearchBox from './components/SearchBox.vue'
 
 const sources = [
   { id: 'restaurants', name: 'Restaurants', url: '/data/restaurants.json', color: '#e74c3c', selectedColor: '#c0392b' },
@@ -12,6 +13,7 @@ const sources = [
 const selectedSourceIds = ref([])
 const sourceData = reactive({}) // { [sourceId]: array of items }
 const selectedMarkerId = ref(null)
+const searchedPlace = ref(null)
 
 const markers = computed(() => {
   const list = []
@@ -68,15 +70,20 @@ function handleMarkerClicked(marker) {
 function clearSelection() {
   selectedMarkerId.value = null
 }
+
+function handlePlaceSelected(place) {
+  searchedPlace.value = place
+}
 </script>
 
 <template>
   <div class="app">
     <header class="toolbar">
+      <SearchBox @place-selected="handlePlaceSelected" />
       <SourceSelector :sources="sources" v-model:selected="selectedSourceIds" />
     </header>
     <main class="content">
-      <MapView :markers="markers" :selectedMarkerId="selectedMarkerId" @marker-clicked="handleMarkerClicked" />
+      <MapView :markers="markers" :selectedMarkerId="selectedMarkerId" :searchedPlace="searchedPlace" @marker-clicked="handleMarkerClicked" />
       <!-- <Sidebar :item="selectedItem" @close="clearSelection" /> -->
     </main>
   </div>
@@ -91,6 +98,9 @@ function clearSelection() {
 .toolbar {
   padding: 8px 12px;
   border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 .content {
   display: flex;

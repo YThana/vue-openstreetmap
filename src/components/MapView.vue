@@ -6,12 +6,14 @@ import 'leaflet.markercluster'
 const props = defineProps({
   markers: { type: Array, required: true },
   selectedMarkerId: { type: String, default: null },
+  searchedPlace: { type: Object, default: null },
 })
 const emit = defineEmits(['marker-clicked'])
 
 const mapEl = ref(null)
 let map
 let cluster
+let searchMarker = null
 
 function styleFor(marker, isSelected) {
   return {
@@ -64,6 +66,33 @@ function renderMarkers() {
   }
 }
 
+function handleSearchedPlace(place) {
+  if (!map || !place) return
+
+  // Remove previous search marker if exists
+  if (searchMarker) {
+    map.removeLayer(searchMarker)
+    searchMarker = null
+  }
+
+  // Create a custom icon for the search result
+  const icon = L.divIcon({
+    className: 'search-marker-icon',
+    html: `<div style="width:24px;height:24px;border-radius:50%;background:#3b82f6;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></div>`,
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+  })
+
+  // Add marker for searched location
+  searchMarker = L.marker([place.lat, place.lng], { icon })
+    .addTo(map)
+    .bindPopup(`<b>${place.name}</b>`)
+    .openPopup()
+
+  // Pan and zoom to the location
+  map.setView([place.lat, place.lng], 15, { animate: true })
+}
+
 onMounted(() => {
   map = L.map(mapEl.value, { preferCanvas: true })
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -80,6 +109,9 @@ onBeforeUnmount(() => {
 
 watch(() => props.markers, () => renderMarkers(), { deep: true })
 watch(() => props.selectedMarkerId, () => renderMarkers())
+watch(() => props.searchedPlace, (newPlace) => {
+  if (newPlace) handleSearchedPlace(newPlace)
+}, { deep: true })
 </script>
 
 <template>
