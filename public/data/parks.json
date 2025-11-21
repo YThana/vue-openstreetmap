@@ -1,0 +1,7 @@
+[
+  { "id": "p1", "name": "Central Park", "lat": 40.785091, "lng": -73.968285, "description": "Large urban park with lakes" },
+  { "id": "p2", "name": "Bryant Park", "lat": 40.753597, "lng": -73.983233, "description": "Public park with events" },
+  { "id": "p3", "name": "Washington Square Park", "lat": 40.730823, "lng": -73.997332, "description": "Iconic arch and fountain" },
+  { "id": "p4", "name": "Bryant Lawn", "lat": 40.753597, "lng": -73.983233, "description": "Lawn area (overlaps p2)" },
+  { "id": "p5", "name": "Washington Fountain", "lat": 40.730823, "lng": -73.997332, "description": "Fountain (overlaps p3)" }
+]

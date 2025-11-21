@@ -1,0 +1,8 @@
+[
+  { "id": "r1", "name": "Cafe Central", "lat": 40.73061, "lng": -73.935242, "address": "123 Main St, NYC", "description": "Cozy spot with coffee and pastries" },
+  { "id": "r2", "name": "Sushi Place", "lat": 40.741895, "lng": -73.989308, "address": "456 Elm St, NYC", "description": "Fresh sushi and sashimi" },
+  { "id": "r3", "name": "Pasta House", "lat": 40.722282, "lng": -73.992462, "address": "789 Oak Ave, NYC", "description": "Homestyle Italian pasta" },
+  { "id": "r4", "name": "Burger Joint", "lat": 40.73061, "lng": -73.935242, "address": "125 Main St, NYC", "description": "Burgers and fries (overlaps r1)" },
+  { "id": "r5", "name": "Vegan Bites", "lat": 40.73061, "lng": -73.935242, "address": "127 Main St, NYC", "description": "Vegan cafe (overlaps r1)" },
+  { "id": "r6", "name": "Ramen Bar", "lat": 40.741895, "lng": -73.989308, "address": "458 Elm St, NYC", "description": "Ramen & izakaya (overlaps r2)" }
+]
