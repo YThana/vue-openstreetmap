@@ -7,6 +7,7 @@ const props = defineProps({
   markers: { type: Array, required: true },
   selectedMarkerId: { type: String, default: null },
   searchedPlace: { type: Object, default: null },
+  userLocation: { type: Object, default: null },
 })
 const emit = defineEmits(['marker-clicked'])
 
@@ -14,6 +15,8 @@ const mapEl = ref(null)
 let map
 let cluster
 let searchMarker = null
+let userMarker = null
+let userAccuracyCircle = null
 
 function styleFor(marker, isSelected) {
   return {
@@ -93,6 +96,53 @@ function handleSearchedPlace(place) {
   map.setView([place.lat, place.lng], 15, { animate: true })
 }
 
+function handleUserLocation(location) {
+  if (!map || !location) return
+
+  // Remove previous user marker and accuracy circle if exists
+  if (userMarker) {
+    map.removeLayer(userMarker)
+    userMarker = null
+  }
+  if (userAccuracyCircle) {
+    map.removeLayer(userAccuracyCircle)
+    userAccuracyCircle = null
+  }
+
+  // Create a pulsing dot icon for user location
+  const icon = L.divIcon({
+    className: 'user-location-icon',
+    html: `
+      <div style="position:relative;width:40px;height:40px;">
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:16px;height:16px;border-radius:50%;background:#3b82f6;border:3px solid #fff;box-shadow:0 0 0 2px #3b82f6;z-index:2;"></div>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:40px;height:40px;border-radius:50%;background:rgba(59,130,246,0.3);animation:pulse-location 2s ease-out infinite;"></div>
+      </div>
+    `,
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
+  })
+
+  // Add marker for user location
+  userMarker = L.marker([location.lat, location.lng], { icon })
+    .addTo(map)
+    .bindPopup('<b>Your Location</b>')
+
+  // Add accuracy circle if accuracy is available
+  if (location.accuracy) {
+    userAccuracyCircle = L.circle([location.lat, location.lng], {
+      radius: location.accuracy,
+      color: '#3b82f6',
+      fillColor: '#3b82f6',
+      fillOpacity: 0.1,
+      weight: 1,
+      opacity: 0.3
+    }).addTo(map)
+  }
+
+  // Pan and zoom to user location
+  map.setView([location.lat, location.lng], 15, { animate: true })
+}
+
 onMounted(() => {
   map = L.map(mapEl.value, { preferCanvas: true })
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -112,14 +162,28 @@ watch(() => props.selectedMarkerId, () => renderMarkers())
 watch(() => props.searchedPlace, (newPlace) => {
   if (newPlace) handleSearchedPlace(newPlace)
 }, { deep: true })
+watch(() => props.userLocation, (newLocation) => {
+  if (newLocation) handleUserLocation(newLocation)
+}, { deep: true })
 </script>
 
 <template>
   <div ref="mapEl" class="map"></div>
 </template>
 
-<style scoped>
+<style>
 .map {
   flex: 1 1 auto;
+}
+
+@keyframes pulse-location {
+  0% {
+    transform: translate(-50%, -50%) scale(0.3);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+  }
 }
 </style>

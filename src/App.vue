@@ -4,6 +4,7 @@ import MapView from './components/MapView.vue'
 import SourceSelector from './components/SourceSelector.vue'
 import Sidebar from './components/Sidebar.vue'
 import SearchBox from './components/SearchBox.vue'
+import LocationButton from './components/LocationButton.vue'
 
 const sources = [
   { id: 'restaurants', name: 'Restaurants', url: '/data/restaurants.json', color: '#e74c3c', selectedColor: '#c0392b' },
@@ -14,6 +15,7 @@ const selectedSourceIds = ref([])
 const sourceData = reactive({}) // { [sourceId]: array of items }
 const selectedMarkerId = ref(null)
 const searchedPlace = ref(null)
+const userLocation = ref(null)
 
 const markers = computed(() => {
   const list = []
@@ -74,16 +76,25 @@ function clearSelection() {
 function handlePlaceSelected(place) {
   searchedPlace.value = place
 }
+
+function handleLocationFound(location) {
+  userLocation.value = location
+}
+
+function handleLocationError(error) {
+  console.error('Location error:', error)
+}
 </script>
 
 <template>
   <div class="app">
     <header class="toolbar">
       <SearchBox @place-selected="handlePlaceSelected" />
+      <LocationButton @location-found="handleLocationFound" @location-error="handleLocationError" />
       <SourceSelector :sources="sources" v-model:selected="selectedSourceIds" />
     </header>
     <main class="content">
-      <MapView :markers="markers" :selectedMarkerId="selectedMarkerId" :searchedPlace="searchedPlace" @marker-clicked="handleMarkerClicked" />
+      <MapView :markers="markers" :selectedMarkerId="selectedMarkerId" :searchedPlace="searchedPlace" :userLocation="userLocation" @marker-clicked="handleMarkerClicked" />
       <!-- <Sidebar :item="selectedItem" @close="clearSelection" /> -->
     </main>
   </div>
